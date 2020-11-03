@@ -228,7 +228,7 @@ Once again, run the following command:
 ```
 $ ./test.sh $PATH_TO_PTH $TEST_DIR
 ```
-As described already, use a proper method to determine final labels from the generated `prob`. If necessary, mapping them to the native sphere before determining the final labels (see the sub-section above).
+As described already, use a proper method to determine final labels from the generated `prob`. If needed, map them to the native sphere before determining the final labels (see the sub-section above).
 ## Context-aware training
 If neuroanatomical association is known (e.g., hierarchical emergence of sulci - non-tertiary: first; tertiary: last), we employ that information for better guidance of labeling. The implementation is straightforward. First, training can be done with upper levels of the hierarchy. Use `--classes` flag in `train.py`.
 
