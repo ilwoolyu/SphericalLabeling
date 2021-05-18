@@ -4,6 +4,7 @@ from torch.utils.data import Dataset, DataLoader
 import collections
 from collections import deque
 import random
+import re
 
 # sphere mesh size at different levels
 nv_sphere = [12, 42, 162, 642, 2562, 10242, 40962, 163842]
@@ -40,7 +41,7 @@ class S2D3DSegLoader(Dataset):
             cat = i.split('.')[0].split('/')[-3]
             if not key in data:
                 data[key] = {'subject': key}
-            data[key].setdefault(i.split('.')[2]+cat, []).append(i)
+            data[key].setdefault("aug"+re.sub("[^0-9]","",i.split('.')[2])+cat, []).append(i)
 
         for key in data:
             for i in data[key]:
@@ -84,21 +85,21 @@ class S2D3DSegLoader(Dataset):
             for i in train:
                 for feat in feature_type:
                     for aug in range(0, deg+1):
-                        flist_train.append(data[i]['deg' + str(aug) + feat])
+                        flist_train.append(data[i]['aug' + str(aug) + feat])
             self.flist = flist_train
 
         if partition == "val":
             flist_test = []
             for i in val:
                 for feat in feature_type:
-                    flist_test.append(data[i]['deg0curv'])
+                    flist_test.append(data[i]['aug0' + feat])
             self.flist = flist_test
 
         if partition == "test":
             flist_test = []
             for i in test:
                 for feat in feature_type:
-                    flist_test.append(data[i]['deg0curv'])
+                    flist_test.append(data[i]['aug0' + feat])
             self.flist = flist_test
 
         # label dictionary
