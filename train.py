@@ -35,8 +35,8 @@ def iou_score(args, pred_cls, true_cls):
     union_ = []
     for i in range(nclass):
         if i not in drop:
-            intersect = ((pred_cls == i) + (true_cls == i)).eq(2).sum().item()
-            union = ((pred_cls == i) + (true_cls == i)).ge(1).sum().item()
+            intersect = ((pred_cls == i) & (true_cls == i)).int().sum().item()
+            union = ((pred_cls == i) | (true_cls == i)).int().sum().item()
             intersect_.append(intersect)
             union_.append(union)
     return np.array(intersect_), np.array(union_)
@@ -50,7 +50,7 @@ def accuracy(args, pred_cls, true_cls):
     tpos = []
     for i in range(nclass):
         if i not in drop:
-            true_positive = ((pred_cls == i) + (true_cls == i)).eq(2).sum().item()
+            true_positive = ((pred_cls == i) & (true_cls == i)).int().sum().item()
             tpos.append(true_positive)
 
             per_cls_counts.append(positive[i])
@@ -65,7 +65,7 @@ def dice(args, pred_cls, true_cls):
     tpos = []
     for i in range(nclass):
         if i not in drop:
-            true_positive = ((pred_cls == i) + (true_cls == i)).eq(2).sum().item()
+            true_positive = ((pred_cls == i) & (true_cls == i)).int().sum().item()
             tpos.append(true_positive)
             per_cls_counts.append((positive[i] + predict[i]) / 2)
     return np.array(tpos) / np.array(per_cls_counts)
