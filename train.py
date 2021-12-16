@@ -45,30 +45,30 @@ def iou_score(args, pred_cls, true_cls):
 def accuracy(args, pred_cls, true_cls):
     nclass = len(args.classes)
     drop = args.drop
-    positive = torch.histc(true_cls.cpu().float(), bins=nclass, min=0, max=nclass, out=None)
     per_cls_counts = []
     tpos = []
     for i in range(nclass):
         if i not in drop:
             true_positive = ((pred_cls == i) & (true_cls == i)).int().sum().item()
             tpos.append(true_positive)
+            denom = (true_cls == i).int().sum().item()
 
-            per_cls_counts.append(positive[i])
+            per_cls_counts.append(denom)
     return np.array(tpos), np.array(per_cls_counts)
 
 def dice(args, pred_cls, true_cls):
     nclass = len(args.classes)
     drop = args.drop
-    positive = torch.histc(true_cls.cpu().float(), bins=nclass, min=0, max=nclass, out=None)
-    predict = torch.histc(pred_cls.cpu().float(), bins=nclass, min=0, max=nclass, out=None)
     per_cls_counts = []
     tpos = []
     for i in range(nclass):
         if i not in drop:
             true_positive = ((pred_cls == i) & (true_cls == i)).int().sum().item()
             tpos.append(true_positive)
-            per_cls_counts.append((positive[i] + predict[i]) / 2)
-    return np.array(tpos) / np.array(per_cls_counts)
+            denom = ((true_cls == i).int().sum().item() + (pred_cls == i).int().sum().item()) / 2
+
+            per_cls_counts.append(denom)
+    return np.array(tpos), np.array(per_cls_counts)
 
 def train(args, model, train_loader, optimizer, epoch, device, logger, keep_id=None):
     model.train()
@@ -109,8 +109,8 @@ def test(args, model, test_loader, epoch, device, logger, keep_id=None):
     per_cls_counts = np.zeros(len(args.classes)-len(drop))
     accs = np.zeros(len(args.classes)-len(drop))
     dices = np.zeros(len(args.classes)-len(drop))
+    per_cls_counts2 = np.zeros(len(args.classes)-len(drop))
     count = 0
-    dices = 0
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.cuda(), target.cuda()
@@ -125,16 +125,18 @@ def test(args, model, test_loader, epoch, device, logger, keep_id=None):
             pred = output.max(dim=1, keepdim=False)[1]  # get the index of the max log-probability
             int_, uni_ = iou_score(args, pred, target)
             tpos, pcc = accuracy(args, pred, target)
-            dices += dice(args, pred, target)
+            num_, denom_ = dice(args, pred, target)
+            dices += num_
             ints_ += int_
             unis_ += uni_
             accs += tpos
             per_cls_counts += pcc
+            per_cls_counts2 += denom_
             count += 1
     ious = ints_ / unis_
     accs /= per_cls_counts
 
-    dices /= count
+    dices /= per_cls_counts2
     test_loss /= count
 
     logger.info('[Epoch {} {} stats]: MIoU: {:.4f}; Mean Accuracy: {:.4f}; Mean Dice: {:.4f}; Avg loss: {:.4f}'.format(
