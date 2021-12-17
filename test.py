@@ -21,10 +21,10 @@ def export(args, model, test_loader, use_cuda):
     with torch.no_grad():
         for data in test_loader:
             if use_cuda:
-                data, reg = data.cuda(), target.cuda()
+                data = data.cuda()
             output = model(data)
             if use_cuda:
-                output = output.cuda().detach().cpu()
+                output = output.cuda().detach().cpu().numpy()
             else:
                 output = output.numpy()
             break
